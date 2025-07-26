@@ -28,6 +28,7 @@ source venv/bin/activate
 
 
 💡 Seu terminal deve agora exibir (venv) no início da linha, indicando que o ambiente está ativo.
+
 3. Instale as Dependências
 Com o venv ativado, instale todas as bibliotecas necessárias.
 
