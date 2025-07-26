@@ -6,7 +6,7 @@ Primeiro, clone este repositório para a sua máquina local e navegue até a pas
 
 git clone <URL_DO_SEU_REPOSITORIO>
 cd e-commerce
-Use code with caution.
+
 
 2. Crie e Ative o Ambiente Virtual
 O uso de um ambiente virtual (venv) é crucial para isolar as dependências do projeto.
@@ -18,11 +18,9 @@ python -m venv venv
 Agora, ative o ambiente. O comando varia conforme seu sistema operacional:
 
 No Windows (PowerShell):
-Pode ser necessário ajustar a política de execução para permitir a ativação de scripts. Execute este comando uma vez como administrador: Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-Generated powershell
-# Ativa o ambiente
+Pode ser necessário ajustar a política de execução para permitir a ativação de scripts. Execute este comando uma vez como administrador: 
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 .\venv\Scripts\Activate.ps1
-
 Powershell
 No macOS/Linux:
 # Ativa o ambiente
@@ -32,8 +30,8 @@ source venv/bin/activate
 💡 Seu terminal deve agora exibir (venv) no início da linha, indicando que o ambiente está ativo.
 3. Instale as Dependências
 Com o venv ativado, instale todas as bibliotecas necessárias.
-Opção A: Instalação Direta (como no log)
 
+Opção A: Instalação Direta (como no log)
 pip install django pillow django-crispy-forms crispy-bootstrap4 django-debug-toolbar
 
 Opção B: Usando um Arquivo requirements.txt (Recomendado)
