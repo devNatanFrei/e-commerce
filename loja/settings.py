@@ -65,6 +65,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 # Adiciona toolbar em dev
 if DEBUG:
     MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
