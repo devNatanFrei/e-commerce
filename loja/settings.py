@@ -25,11 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'inseguro-para-dev')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 # Hosts permitidos: inclui localhost, e-commerce-toui.onrender.com e quaisquer via ENV
-ALLOWED_HOSTS = os.getenv(
-    'ALLOWED_HOSTS',
-    '127.0.0.1,localhost,e-commerce-toui.onrender.com'
-).split(',')
-
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 #
 # Aplicativos instalados
 #
