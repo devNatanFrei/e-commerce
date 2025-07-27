@@ -14,18 +14,25 @@ load_dotenv()
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# SECURITY WARNING: keep the secret key used in production secret!
+#
+# Segurança
+#
+
+# Chave secreta via ENV, com fallback inseguro para dev
 SECRET_KEY = os.getenv('SECRET_KEY', 'inseguro-para-dev')
 
-# SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG via ENV (deve ser 'False' em produção)
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-# Hosts autorizados (separados por vírgula)
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+# Hosts permitidos: inclui localhost, e-commerce-toui.onrender.com e quaisquer via ENV
+ALLOWED_HOSTS = os.getenv(
+    'ALLOWED_HOSTS',
+    '127.0.0.1,localhost,e-commerce-toui.onrender.com'
+).split(',')
 
-
-# Application definition
-
+#
+# Aplicativos instalados
+#
 INSTALLED_APPS = [
     'produto',
     'pedido',
@@ -42,12 +49,15 @@ INSTALLED_APPS = [
     'crispy_forms',
 ]
 
-# só carrega o debug_toolbar em dev
+# Carrega debug_toolbar só em dev
 if DEBUG:
     INSTALLED_APPS += ['debug_toolbar']
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
+#
+# Middleware
+#
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -58,12 +68,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# só adiciona o middleware do debug_toolbar em dev
+# Adiciona toolbar em dev
 if DEBUG:
-    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware'] + MIDDLEWARE
+    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
 
+#
+# URLs e WSGI
+#
 ROOT_URLCONF = 'loja.urls'
+WSGI_APPLICATION = 'loja.wsgi.application'
 
+#
+# Templates
+#
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -80,10 +97,9 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'loja.wsgi.application'
-
-
-# Database (SQLite)
+#
+# Banco de dados (SQLite)
+#
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -91,8 +107,9 @@ DATABASES = {
     }
 }
 
-
-# Password validation
+#
+# Validação de senhas
+#
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -100,26 +117,28 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-
-# Internationalization
+#
+# Internacionalização
+#
 LANGUAGE_CODE = 'pt-BR'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
+#
+# Arquivos estáticos e mídia
+#
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'templates/static')]
 
-# Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-# Message tags
+#
+# Mensagens
+#
 MESSAGE_TAGS = {
     constants.DEBUG: 'alert-info',
     constants.ERROR: 'alert-danger',
@@ -128,11 +147,14 @@ MESSAGE_TAGS = {
     constants.WARNING: 'alert-warning',
 }
 
-# Session settings
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 days
+#
+# Sessão
+#
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 dias
 SESSION_SAVE_EVERY_REQUEST = False
 
-
-# Internal IPs for debug toolbar
+#
+# Debug Toolbar
+#
 if DEBUG:
     INTERNAL_IPS = ['127.0.0.1']
