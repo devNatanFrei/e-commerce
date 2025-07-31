@@ -7,13 +7,13 @@ urlpatterns = [
     path('pedido/', include('pedido.urls')),
     path('perfil/', include('perfil.urls')),
     path('', include('produto.urls')),
-
+    # path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
 if settings.DEBUG:
     urlpatterns += [
-        path('meu-admin/', admin.site.urls),
+        path('admin/', admin.site.urls),
     ]
     
 
