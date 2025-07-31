@@ -1,7 +1,10 @@
-from django.conf import settings
 import os
+from io import BytesIO
 from PIL import Image
+
 from django.db import models
+from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from utils import utils
 
@@ -33,36 +36,38 @@ class Produto(models.Model):
         return utils.formata_preco(self.preco_marketing_promocional)
     get_preco_promocional_formatado.short_description = 'Preço Promo.'
 
-    @staticmethod
-    def resize_image(img, new_width=800):
-        img_full_path = os.path.join(settings.MEDIA_ROOT, img.name)
-        img_pil = Image.open(img_full_path)
-        original_width, original_height = img_pil.size
-
-        if original_width <= new_width:
-            img_pil.close()
-            return
-
-        new_height = round((new_width * original_height) / original_width)
-
-        new_img = img_pil.resize((new_width, new_height), Image.LANCZOS)
-        new_img.save(
-            img_full_path,
-            optimize=True,
-            quality=50
-        )
-
     def save(self, *args, **kwargs):
+
         if not self.slug:
             slug = f'{slugify(self.nome)}'
             self.slug = slug
 
         super().save(*args, **kwargs)
 
-        max_image_size = 800
-
+ 
         if self.imagem:
-            self.resize_image(self.imagem, max_image_size)
+           
+            img = Image.open(self.imagem)
+            original_width, original_height = img.size
+            new_width = 800
+
+
+            if original_width > new_width:
+ 
+                new_height = round((new_width * original_height) / original_width)
+                
+           
+                new_img = img.resize((new_width, new_height), Image.LANCZOS)
+                
+      
+                buffer = BytesIO()
+                new_img.save(buffer, format='JPEG', quality=60, optimize=True)
+                
+    
+                file_name = os.path.basename(self.imagem.name)
+                
+           
+                self.imagem.save(file_name, ContentFile(buffer.getvalue()), save=False)
 
     def __str__(self):
         return self.nome
