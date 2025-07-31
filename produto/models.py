@@ -1,3 +1,5 @@
+# produto/models.py (Versão final e robusta)
+
 import os
 from io import BytesIO
 from PIL import Image
@@ -36,38 +38,36 @@ class Produto(models.Model):
         return utils.formata_preco(self.preco_marketing_promocional)
     get_preco_promocional_formatado.short_description = 'Preço Promo.'
 
+    # --- MÉTODO SAVE CORRIGIDO ---
     def save(self, *args, **kwargs):
-
         if not self.slug:
-            slug = f'{slugify(self.nome)}'
-            self.slug = slug
+            self.slug = slugify(self.nome)
 
-        super().save(*args, **kwargs)
-
- 
+      
         if self.imagem:
            
-            img = Image.open(self.imagem)
-            original_width, original_height = img.size
-            new_width = 800
+            if hasattr(self.imagem.file, 'read'):
+                img = Image.open(self.imagem.file)
+                original_width, _ = img.size
+                new_width = 800
 
+                if original_width > new_width:
+                  
+                    new_img = img.resize((new_width, int(new_width * img.height / img.width)), Image.LANCZOS)
+                    
+              
+                    buffer = BytesIO()
+                    new_img.save(buffer, format='JPEG', quality=60, optimize=True)
+                    
+                
+                    file_name = os.path.basename(self.imagem.name)
+                    
+                 
+                    self.imagem.file = ContentFile(buffer.getvalue())
+                    self.imagem.name = file_name
 
-            if original_width > new_width:
- 
-                new_height = round((new_width * original_height) / original_width)
-                
-           
-                new_img = img.resize((new_width, new_height), Image.LANCZOS)
-                
       
-                buffer = BytesIO()
-                new_img.save(buffer, format='JPEG', quality=60, optimize=True)
-                
-    
-                file_name = os.path.basename(self.imagem.name)
-                
-           
-                self.imagem.save(file_name, ContentFile(buffer.getvalue()), save=False)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.nome
