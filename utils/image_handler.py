@@ -1,32 +1,25 @@
 """
-Módulo para processamento e upload de imagens para o Supabase Storage.
-Centraliza toda a lógica de manipulação de imagens do e-commerce.
+Módulo para processamento de imagens para o e-commerce.
+Centraliza a lógica de redimensionamento e preparação de imagens.
+O upload é feito pelo módulo supabase_uploader.
 """
 
 import os
 from io import BytesIO
-from datetime import datetime
 from PIL import Image
-from django.core.files.base import ContentFile
 from django.conf import settings
-from supabase import create_client, Client
+from .supabase_uploader import upload_image_to_supabase
 
 
 class ImageHandler:
     """
-    Classe responsável por processar e fazer upload de imagens para o Supabase.
+    Classe responsável por processar imagens (redimensionamento).
+    O upload é delegado para o módulo supabase_uploader.
     """
     
     def __init__(self):
-        self.max_width = 800
-        self.jpeg_quality = 60
-        self.bucket_name = os.getenv('AWS_STORAGE_BUCKET_NAME')
-        self.supabase_url = os.getenv('AWS_S3_ENDPOINT_URL')
-        self.supabase_key = os.getenv('AWS_SECRET_ACCESS_KEY')
-        
-        # Valida as credenciais
-        if not all([self.bucket_name, self.supabase_url, self.supabase_key]):
-            raise Exception("Credenciais do Supabase não configuradas nas variáveis de ambiente.")
+        self.max_width = 400
+        self.png_optimize = True
     
     def resize_image(self, image_file, max_width=None):
         """
@@ -37,7 +30,7 @@ class ImageHandler:
             max_width: Largura máxima (padrão: self.max_width)
             
         Returns:
-            BytesIO: Buffer com a imagem redimensionada em JPEG
+            BytesIO: Buffer com a imagem redimensionada em PNG
         """
         try:
             if max_width is None:
@@ -49,9 +42,8 @@ class ImageHandler:
             else:
                 img = image_file
             
-            # Converte para RGB se necessário (para garantir compatibilidade com JPEG)
-            if img.mode in ('RGBA', 'LA', 'P'):
-                img = img.convert('RGB')
+            # Preserva o formato original ou garante compatibilidade com PNG
+            original_format = img.format
             
             # Redimensiona apenas se necessário
             if img.width > max_width:
@@ -61,70 +53,15 @@ class ImageHandler:
             else:
                 print(f"--- IMAGE_HANDLER: Imagem já tem tamanho adequado ({img.width}px) ---")
             
-            # Salva em buffer
+            # Salva em buffer mantendo PNG
             buffer = BytesIO()
-            img.save(buffer, format='JPEG', quality=self.jpeg_quality, optimize=True)
+            img.save(buffer, format='PNG', optimize=self.png_optimize)
             buffer.seek(0)
             
             return buffer
             
         except Exception as e:
             print(f"--- IMAGE_HANDLER: ERRO ao redimensionar imagem: {e} ---")
-            raise e
-    
-    def generate_file_path(self, filename):
-        """
-        Gera o caminho do arquivo no bucket seguindo a estrutura: produto_imagens/YYYY/MM/filename
-        
-        Args:
-            filename: Nome do arquivo
-            
-        Returns:
-            str: Caminho completo no bucket
-        """
-        now = datetime.now()
-        year = now.strftime('%Y')
-        month = now.strftime('%m')
-        return f"produto_imagens/{year}/{month}/{filename}"
-    
-    def upload_to_supabase(self, image_buffer, filename):
-        """
-        Faz upload de uma imagem para o Supabase Storage.
-        
-        Args:
-            image_buffer: BytesIO com os dados da imagem
-            filename: Nome do arquivo
-            
-        Returns:
-            str: URL pública da imagem
-        """
-        try:
-            # Inicializa cliente Supabase
-            base_url = self.supabase_url.replace('/storage/v1', '')
-            supabase = create_client(base_url, self.supabase_key)
-            
-            # Gera o caminho no bucket
-            file_path = self.generate_file_path(filename)
-            
-            # Prepara os dados para upload
-            image_buffer.seek(0)
-            file_data = image_buffer.read()
-            
-            # Faz o upload
-            result = supabase.storage.from_(self.bucket_name).upload(
-                path=file_path,
-                file=file_data,
-                file_options={"content-type": "image/jpeg"}
-            )
-            
-            # Constrói URL pública
-            public_url = f"{self.supabase_url}/object/public/{self.bucket_name}/{file_path}"
-            
-            print(f"--- IMAGE_HANDLER: Upload realizado com sucesso: {public_url} ---")
-            return public_url
-            
-        except Exception as e:
-            print(f"--- IMAGE_HANDLER: ERRO no upload para Supabase: {e} ---")
             raise e
     
     def process_and_upload_image(self, image_field):
@@ -144,11 +81,16 @@ class ImageHandler:
             # Obtém o nome do arquivo original
             filename = os.path.basename(image_field.name)
             
+            # Garante que o arquivo tenha extensão PNG
+            if not filename.lower().endswith('.png'):
+                name_without_ext = os.path.splitext(filename)[0]
+                filename = f"{name_without_ext}.png"
+            
             # Redimensiona a imagem
             resized_buffer = self.resize_image(image_field.file)
             
-            # Faz upload para Supabase
-            public_url = self.upload_to_supabase(resized_buffer, filename)
+            # Faz upload para Supabase usando o módulo dedicado
+            public_url = upload_image_to_supabase(resized_buffer, filename)
             
             return public_url
             
