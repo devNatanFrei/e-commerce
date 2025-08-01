@@ -1,15 +1,9 @@
-# produto/models.py (Versão final e robusta)
-
 import os
-from io import BytesIO
-from PIL import Image
-
 from django.db import models
 from django.conf import settings
-from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from utils import utils
-
+from utils.image_handler import process_product_image
 
 class Produto(models.Model):
     nome = models.CharField(max_length=255)
@@ -42,42 +36,29 @@ class Produto(models.Model):
     def save(self, *args, **kwargs):
         print("--- DEBUG: INICIANDO O MÉTODO SAVE ---")
         
+        # Gera slug se não existir
         if not self.slug:
             self.slug = slugify(self.nome)
             print(f"--- DEBUG: Slug gerado: {self.slug} ---")
 
- 
-        if not settings.DEBUG and self.imagem and hasattr(self.imagem.file, 'read'):
-            print("--- DEBUG: Ambiente de produção detectado, processando imagem. ---")
+        # Processa a imagem em produção
+        if self.imagem:
             try:
-                # Lógica de redimensionamento
-                img = Image.open(self.imagem.file)
-                new_width = 800
-                if img.width > new_width:
-                    print(f"--- DEBUG: Redimensionando imagem de {img.width}px para {new_width}px ---")
-                    new_height = int(new_width * img.height / img.width)
-                    new_img = img.resize((new_width, new_height), Image.LANCZOS)
-                    
-                    buffer = BytesIO()
-                    new_img.save(buffer, format='JPEG', quality=60, optimize=True)
-                    
-                    file_name = os.path.basename(self.imagem.name)
-                    self.imagem.file = ContentFile(buffer.getvalue())
-                    self.imagem.name = file_name
-                    print(f"--- DEBUG: Imagem redimensionada e pronta para upload: {file_name} ---")
+                image_url = process_product_image(self.imagem)
+                if image_url:
+                    print(f"--- DEBUG: Imagem processada e enviada para: {image_url} ---")
                 else:
-                    print("--- DEBUG: Imagem já tem o tamanho correto, não precisa redimensionar. ---")
+                    print("--- DEBUG: Imagem não foi processada (modo desenvolvimento ou sem arquivo) ---")
             except Exception as e:
-                print(f"--- ERRO FATAL: Falha ao redimensionar a imagem: {e} ---")
+                print(f"--- ERRO: Falha ao processar imagem: {e} ---")
+                # Em caso de erro, continua o save sem a imagem processada
         
         try:
-            print("--- DEBUG: Chamando super().save() para salvar no banco/storage... ---")
-            # Salva o modelo e faz o upload da imagem
+            print("--- DEBUG: Chamando super().save() para salvar no banco... ---")
             super().save(*args, **kwargs)
             print("--- DEBUG: super().save() concluído com SUCESSO. ---")
         except Exception as e:
             print(f"--- ERRO FATAL: Falha durante o super().save(): {e} ---")
-            # Re-lança a exceção para que o Django mostre a página de erro
             raise
 
     def __str__(self):
