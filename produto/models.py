@@ -11,7 +11,7 @@ class Produto(models.Model):
     descricao_longa = models.TextField()
     imagem = models.ImageField(
         upload_to='produto_imagens/%Y/%m/', blank=True, null=True)
-    imagem_url = models.URLField(blank=True, null=True)  # Campo para URL do Supabase
+    imagem_url = models.URLField(blank=True, null=True)  
     slug = models.SlugField(unique=True, blank=True, null=True)
     preco_marketing = models.FloatField(verbose_name='Preço')
     preco_marketing_promocional = models.FloatField(
@@ -55,9 +55,9 @@ class Produto(models.Model):
             try:
                 image_url = process_product_image(self.imagem)
                 if image_url:
-                    self.imagem_url = image_url  # Salva a URL do Supabase
+                    self.imagem_url = image_url  
                     print(f"--- DEBUG: Imagem processada e URL salva: {image_url} ---")
-                    # Limpa o arquivo local após upload
+               
                     self.imagem = None
                 else:
                     print("--- DEBUG: Imagem não foi processada ---")
