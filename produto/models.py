@@ -35,7 +35,7 @@ class Produto(models.Model):
 
     @property
     def imagem_display_url(self):
-        """Retorna a URL da imagem (Supabase ou local)"""
+   
         if self.imagem_url:
             return self.imagem_url
         elif self.imagem:
@@ -45,12 +45,12 @@ class Produto(models.Model):
     def save(self, *args, **kwargs):
         print("--- DEBUG: INICIANDO O MÉTODO SAVE ---")
         
-        # Gera slug se não existir
+
         if not self.slug:
             self.slug = slugify(self.nome)
             print(f"--- DEBUG: Slug gerado: {self.slug} ---")
 
-        # Processa a imagem e salva URL do Supabase
+     
         if self.imagem and hasattr(self.imagem, 'file'):
             try:
                 image_url = process_product_image(self.imagem)
