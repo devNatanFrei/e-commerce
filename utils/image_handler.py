@@ -9,9 +9,9 @@ class ImageHandler:
     """
     
     def __init__(self):
-        self.max_width = 250  # Reduzido ainda mais para 250px
+        self.max_width = 250  
         self.png_optimize = True
-        self.quality = 85  # Para otimização quando necessário
+        self.quality = 85  
     
     def resize_image(self, image_file, max_width=None):
         """
@@ -34,11 +34,11 @@ class ImageHandler:
             else:
                 img = image_file
             
-            # Converte para RGBA se necessário (mantém transparência)
+            
             if img.mode != 'RGBA':
                 img = img.convert('RGBA')
             
-            # Redimensiona apenas se necessário
+            
             if img.width > max_width:
                 print(f"--- IMAGE_HANDLER: Redimensionando de {img.width}px para {max_width}px ---")
                 new_height = int(max_width * img.height / img.width)
@@ -46,7 +46,7 @@ class ImageHandler:
             else:
                 print(f"--- IMAGE_HANDLER: Imagem já tem tamanho adequado ({img.width}px) ---")
             
-            # Salva em buffer como PNG
+           
             buffer = BytesIO()
             img.save(buffer, format='PNG', optimize=self.png_optimize)
             buffer.seek(0)
@@ -71,18 +71,18 @@ class ImageHandler:
             return None
         
         try:
-            # Obtém o nome do arquivo original
+          
             filename = os.path.basename(image_field.name)
             
-            # Converte para PNG se necessário
+        
             if not filename.lower().endswith('.png'):
                 name_without_ext = os.path.splitext(filename)[0]
                 filename = f"{name_without_ext}.png"
             
-            # Redimensiona a imagem
+          
             resized_buffer = self.resize_image(image_field.file)
             
-            # Faz upload para Supabase usando o módulo dedicado
+  
             from .supabase_uploader import supabase_uploader
             public_url = supabase_uploader.upload_file(
                 file_data=resized_buffer,
@@ -98,10 +98,10 @@ class ImageHandler:
             raise e
 
 
-# Instância global do handler
+
 image_handler = ImageHandler()
 
-# Função auxiliar para compatibilidade com o modelo
+
 def process_product_image(image_field):
     """
     Função auxiliar para processar imagens de produto.
