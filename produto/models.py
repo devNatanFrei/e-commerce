@@ -11,6 +11,7 @@ class Produto(models.Model):
     descricao_longa = models.TextField()
     imagem = models.ImageField(
         upload_to='produto_imagens/%Y/%m/', blank=True, null=True)
+    imagem_url = models.URLField(blank=True, null=True)  # Campo para URL do Supabase
     slug = models.SlugField(unique=True, blank=True, null=True)
     preco_marketing = models.FloatField(verbose_name='Preço')
     preco_marketing_promocional = models.FloatField(
@@ -32,6 +33,14 @@ class Produto(models.Model):
         return utils.formata_preco(self.preco_marketing_promocional)
     get_preco_promocional_formatado.short_description = 'Preço Promo.'
 
+    @property
+    def imagem_display_url(self):
+        """Retorna a URL da imagem (Supabase ou local)"""
+        if self.imagem_url:
+            return self.imagem_url
+        elif self.imagem:
+            return self.imagem.url
+        return None
    
     def save(self, *args, **kwargs):
         print("--- DEBUG: INICIANDO O MÉTODO SAVE ---")
@@ -41,17 +50,19 @@ class Produto(models.Model):
             self.slug = slugify(self.nome)
             print(f"--- DEBUG: Slug gerado: {self.slug} ---")
 
-        # Processa a imagem em produção
-        if self.imagem:
+        # Processa a imagem e salva URL do Supabase
+        if self.imagem and hasattr(self.imagem, 'file'):
             try:
                 image_url = process_product_image(self.imagem)
                 if image_url:
-                    print(f"--- DEBUG: Imagem processada e enviada para: {image_url} ---")
+                    self.imagem_url = image_url  # Salva a URL do Supabase
+                    print(f"--- DEBUG: Imagem processada e URL salva: {image_url} ---")
+                    # Limpa o arquivo local após upload
+                    self.imagem = None
                 else:
-                    print("--- DEBUG: Imagem não foi processada (modo desenvolvimento ou sem arquivo) ---")
+                    print("--- DEBUG: Imagem não foi processada ---")
             except Exception as e:
                 print(f"--- ERRO: Falha ao processar imagem: {e} ---")
-                # Em caso de erro, continua o save sem a imagem processada
         
         try:
             print("--- DEBUG: Chamando super().save() para salvar no banco... ---")

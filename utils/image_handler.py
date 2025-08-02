@@ -1,15 +1,6 @@
-"""
-Módulo para processamento de imagens para o e-commerce.
-Centraliza a lógica de redimensionamento e preparação de imagens.
-O upload é feito pelo módulo supabase_uploader.
-"""
-
-import os
-from io import BytesIO
 from PIL import Image
-from django.conf import settings
-from .supabase_uploader import upload_image_to_supabase
-
+from io import BytesIO
+import os
 
 class ImageHandler:
     """
@@ -18,8 +9,9 @@ class ImageHandler:
     """
     
     def __init__(self):
-        self.max_width = 400
+        self.max_width = 250  # Reduzido ainda mais para 250px
         self.png_optimize = True
+        self.quality = 85  # Para otimização quando necessário
     
     def resize_image(self, image_file, max_width=None):
         """
@@ -42,8 +34,9 @@ class ImageHandler:
             else:
                 img = image_file
             
-            # Preserva o formato original ou garante compatibilidade com PNG
-            original_format = img.format
+            # Converte para RGBA se necessário (mantém transparência)
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
             
             # Redimensiona apenas se necessário
             if img.width > max_width:
@@ -53,7 +46,7 @@ class ImageHandler:
             else:
                 print(f"--- IMAGE_HANDLER: Imagem já tem tamanho adequado ({img.width}px) ---")
             
-            # Salva em buffer mantendo PNG
+            # Salva em buffer como PNG
             buffer = BytesIO()
             img.save(buffer, format='PNG', optimize=self.png_optimize)
             buffer.seek(0)
@@ -81,7 +74,7 @@ class ImageHandler:
             # Obtém o nome do arquivo original
             filename = os.path.basename(image_field.name)
             
-            # Garante que o arquivo tenha extensão PNG
+            # Converte para PNG se necessário
             if not filename.lower().endswith('.png'):
                 name_without_ext = os.path.splitext(filename)[0]
                 filename = f"{name_without_ext}.png"
@@ -90,46 +83,34 @@ class ImageHandler:
             resized_buffer = self.resize_image(image_field.file)
             
             # Faz upload para Supabase usando o módulo dedicado
-            public_url = upload_image_to_supabase(resized_buffer, filename)
+            from .supabase_uploader import supabase_uploader
+            public_url = supabase_uploader.upload_file(
+                file_data=resized_buffer,
+                filename=filename,
+                content_type="image/png",
+                folder="produto_imagens"
+            )
             
             return public_url
             
         except Exception as e:
             print(f"--- IMAGE_HANDLER: ERRO no processamento da imagem: {e} ---")
             raise e
-    
-    def should_process_image(self, image_field):
-        """
-        Determina se uma imagem deve ser processada.
-        
-        Args:
-            image_field: Campo ImageField do Django
-            
-        Returns:
-            bool: True se deve processar, False caso contrário
-        """
-        return (
-            not settings.DEBUG and  # Apenas em produção
-            image_field and         # Tem imagem
-            hasattr(image_field, 'file') and  # Tem arquivo
-            hasattr(image_field.file, 'read')  # É um arquivo válido
-        )
 
 
-# Instância global para uso nos models
+# Instância global do handler
 image_handler = ImageHandler()
 
-
+# Função auxiliar para compatibilidade com o modelo
 def process_product_image(image_field):
     """
-    Função helper para processar imagens de produtos.
+    Função auxiliar para processar imagens de produto.
+    Utiliza a instância global do ImageHandler.
     
     Args:
-        image_field: Campo ImageField do produto
+        image_field: Campo ImageField do Django
         
     Returns:
-        str: URL pública da imagem ou None
+        str: URL pública da imagem ou None se não houver imagem
     """
-    if image_handler.should_process_image(image_field):
-        return image_handler.process_and_upload_image(image_field)
-    return None
+    return image_handler.process_and_upload_image(image_field)
