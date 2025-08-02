@@ -9,7 +9,7 @@ urlpatterns = [
     path('pedido/', include('pedido.urls')),
     path('perfil/', include('perfil.urls')),
     path('', include('produto.urls')),
-    path('admin/', admin.site.urls),
+    # path('admin/', admin.site.urls),
 ]
 
 
