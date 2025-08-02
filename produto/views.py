@@ -53,11 +53,9 @@ class AdicionarAoCarrinho(View):
         preco_unitario_promocional = variacao.preco_promocional
         quantidade = 1
         slug = produto.slug
-        imagem = produto.imagem
+        imagem = produto.imagem_display_url
 
-        if imagem:
-            imagem = imagem.name
-        else:
+        if not imagem:
             imagem = ''
 
         if variacao.estoque < 1:
@@ -205,4 +203,3 @@ class Busca(ListaProdutos):
         return qs
 
 
-   
