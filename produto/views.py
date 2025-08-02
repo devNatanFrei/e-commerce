@@ -54,6 +54,8 @@ class AdicionarAoCarrinho(View):
         quantidade = 1
         slug = produto.slug
         imagem = produto.imagem_display_url
+        
+        print(f"DEBUG - URL da imagem: {imagem}")
 
         if not imagem:
             imagem = ''
@@ -149,6 +151,12 @@ class Carrinho(View):
         context = {
             'carrinho': self.request.session.get('carrinho', {})
         }
+        
+        print("=== DEBUG CARRINHO ===")
+        for item_id, item_data in context['carrinho'].items():
+            print(f"Item ID: {item_id}")
+            print(f"Imagem URL: {item_data.get('imagem', 'Sem imagem')}")
+            print("=" * 30)
         return render(self.request, 'produto/carrinho.html', context)
     
 class ResumoDaCompra(View):
